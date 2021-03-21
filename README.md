@@ -26,7 +26,9 @@ Timer elapsed
 ```
 
 Format for the duration specifier is the one used by
-[Golang's stdlib](https://golang.org/pkg/time/#ParseDuration).
+[Golang's stdlib](https://golang.org/pkg/time/#ParseDuration) so most
+combinations of `h`, `m`, `s`, `ms`, `ns` (for whatever reason) should work,
+e.g. `2h35m8s1ms`.
 
 The `at` command is working with the same format as outputted on announcing
 a timer, so e.g.
