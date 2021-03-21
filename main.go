@@ -43,7 +43,7 @@ func run() error {
 		}
 
 		if dur, err := time.ParseDuration(args[1]); err != nil {
-			return fmt.Errorf("in: argument must be a valid duration: %w", err)
+			return fmt.Errorf("in: argument must be a valid duration: %v", err)
 		} else {
 			alertIn(dur)
 		}
@@ -54,7 +54,7 @@ func run() error {
 		}
 
 		if t, err := time.ParseInLocation("2006-01-02T15:04:05", args[1], time.Local); err != nil {
-			return fmt.Errorf("at: argument must be a valid time: %w", err)
+			return fmt.Errorf("at: argument must be a valid time: %v", err)
 		} else {
 			alertIn(t.Sub(time.Now()))
 		}
