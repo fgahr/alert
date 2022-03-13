@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
@@ -45,7 +47,7 @@ func run() error {
 		if dur, err := time.ParseDuration(args[1]); err != nil {
 			return fmt.Errorf("in: argument must be a valid duration: %v", err)
 		} else {
-			alertIn(dur)
+			alertAt(time.Now().Add(dur))
 		}
 	case "at":
 		if len(args) < 2 {
@@ -56,7 +58,7 @@ func run() error {
 		if t, err := time.ParseInLocation("2006-01-02T15:04:05", args[1], time.Local); err != nil {
 			return fmt.Errorf("at: argument must be a valid time: %v", err)
 		} else {
-			alertIn(t.Sub(time.Now()))
+			alertAt(t)
 		}
 	default:
 		help(os.Stderr)
@@ -65,8 +67,27 @@ func run() error {
 	return nil
 }
 
-func alertIn(dur time.Duration) {
-	fmt.Printf("Alerting in %v at %s\n", dur, time.Now().Add(dur).Local().Format("2006-01-02T15:04:05"))
-	time.Sleep(dur)
-	fmt.Println("Timer elapsed\u0007")
+func alertAt(t time.Time) {
+	sigChan := make(chan os.Signal)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGHUP, syscall.SIGABRT, syscall.SIGTERM)
+
+	dur := t.Sub(time.Now())
+	done := time.NewTimer(dur)
+	tick := time.NewTicker(time.Second)
+
+	fmt.Printf("Alerting at %s\n", time.Now().Add(dur).Local().Format("2006-01-02T15:04:05"))
+	fmt.Printf("\r%v", dur.Round(time.Second))
+	for {
+		select {
+		case <-done.C:
+			fmt.Println("\rTimer elapsed\u0007")
+			return
+		case <-tick.C:
+			remaining := t.Sub(time.Now())
+			fmt.Printf("\r%v", remaining.Round(time.Second))
+		case <-sigChan:
+			fmt.Fprintln(os.Stderr, "\nAborted.")
+			return
+		}
+	}
 }
