@@ -76,18 +76,28 @@ func alertAt(t time.Time) {
 	tick := time.NewTicker(time.Second)
 
 	fmt.Printf("Alerting at %s\n", time.Now().Add(dur).Local().Format("2006-01-02T15:04:05"))
-	fmt.Printf("\r%v", dur.Round(time.Second))
+	fmt.Print(dur.Round(time.Second))
 	for {
 		select {
 		case <-done.C:
-			fmt.Println("\rTimer elapsed\u0007")
+			clear()
+			fmt.Println("Timer elapsed\u0007")
 			return
 		case <-tick.C:
 			remaining := t.Sub(time.Now())
-			fmt.Printf("\r%v", remaining.Round(time.Second))
+			clear()
+			fmt.Print(remaining.Round(time.Second))
 		case <-sigChan:
 			fmt.Fprintln(os.Stderr, "\nAborted.")
 			return
 		}
 	}
+}
+
+func clear() {
+	// 60 width should be long enough to reliably catch any remnants
+	// of previously printed durations. Without clearing we might
+	// be stuck with a transition like '10s' => '9ss' => '8ss'
+	// because the third column is never updated again.
+	fmt.Printf("\r%60s\r", "")
 }
